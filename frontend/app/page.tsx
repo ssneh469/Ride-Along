@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Header from '@/components/header';
 import HomePage from '@/components/home-page';
 import OfferRidePage from '@/components/offer-ride-page';
@@ -26,6 +26,11 @@ interface BookingData {
 export default function Page() {
   const [currentPage, setCurrentPage] = useState<PageState>('home');
   const [bookingData, setBookingData] = useState<BookingData>({});
+  const [, setIsLoggedIn] = useState(false);
+
+  const handleAuthChange = useCallback((loggedIn: boolean) => {
+    setIsLoggedIn(loggedIn);
+  }, []);
 
   const handleOfferRide = () => setCurrentPage('offer');
   const handleFindRide = () => setCurrentPage('find');
@@ -38,7 +43,7 @@ export default function Page() {
 
   return (
     <>
-      <Header />
+      <Header onAuthChange={handleAuthChange} />
       <main className="min-h-screen bg-background">
         {currentPage === 'home' && (
           <HomePage 

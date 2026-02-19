@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, MapPin, Clock, Users, DollarSign } from 'lucide-react';
+import { createRide, getToken } from '@/lib/api';
 
 interface OfferRidePageProps {
   onBack: () => void;
@@ -19,16 +20,44 @@ export default function OfferRidePage({ onBack }: OfferRidePageProps) {
     seats: '1',
     pricePerSeat: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Ride offered! ' + JSON.stringify(formData));
-    onBack();
+    setError('');
+
+    if (!getToken()) {
+      setError('Please login first to offer a ride.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await createRide({
+        source: formData.source,
+        destination: formData.destination,
+        departureTime: formData.time,
+        seats: parseInt(formData.seats),
+        pricePerSeat: parseFloat(formData.pricePerSeat),
+      });
+
+      if (res.ok) {
+        alert('Ride listed successfully!');
+        onBack();
+      } else {
+        setError((res.data.error as string) || 'Failed to create ride');
+      }
+    } catch {
+      setError('Cannot connect to server. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isFormValid = formData.source && formData.destination && formData.time && formData.pricePerSeat;
@@ -49,6 +78,11 @@ export default function OfferRidePage({ onBack }: OfferRidePageProps) {
 
       {/* Form */}
       <div className="p-4 max-w-2xl mx-auto">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Route Section */}
           <div className="space-y-3">
@@ -161,10 +195,10 @@ export default function OfferRidePage({ onBack }: OfferRidePageProps) {
           <div className="space-y-2 pt-4">
             <Button
               type="submit"
-              disabled={!isFormValid}
+              disabled={!isFormValid || loading}
               className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             >
-              List Your Ride
+              {loading ? 'Listing...' : 'List Your Ride'}
             </Button>
             <Button
               type="button"

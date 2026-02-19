@@ -2,11 +2,12 @@
 
 import React from "react"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RideCard from '@/components/ride-card';
 import { ArrowLeft, MapPin, Search } from 'lucide-react';
+import { getRides, createBooking, getToken } from '@/lib/api';
 
 interface Ride {
   id: string;
@@ -26,75 +27,83 @@ interface FindRidePageProps {
   onBookRide: (ride: Ride, seats: number) => void;
 }
 
-const MOCK_RIDES: Ride[] = [
-  {
-    id: '1',
-    rider: 'Rahul',
-    avatar: 'R',
-    source: 'Downtown Metro Station',
-    destination: 'Tech Park Campus',
-    time: '08:30 AM',
-    price: 60,
-    seats: 2,
-    rating: 4.9,
-    reviews: 24,
-  },
-  {
-    id: '2',
-    rider: 'Priya',
-    avatar: 'P',
-    source: 'Central Bus Terminal',
-    destination: 'Tech Park Campus',
-    time: '08:45 AM',
-    price: 50,
-    seats: 1,
-    rating: 4.8,
-    reviews: 18,
-  },
-  {
-    id: '3',
-    rider: 'Arjun',
-    avatar: 'A',
-    source: 'Downtown Metro Station',
-    destination: 'Tech Park Campus',
-    time: '09:00 AM',
-    price: 70,
-    seats: 3,
-    rating: 5.0,
-    reviews: 12,
-  },
-  {
-    id: '4',
-    rider: 'Sneha',
-    avatar: 'S',
-    source: 'Airport Road',
-    destination: 'Tech Park Campus',
-    time: '08:15 AM',
-    price: 120,
-    seats: 1,
-    rating: 4.7,
-    reviews: 31,
-  },
-];
-
 export default function FindRidePage({ onBack, onBookRide }: FindRidePageProps) {
   const [searchData, setSearchData] = useState({
     destination: '',
     date: '',
   });
 
+  const [rides, setRides] = useState<Ride[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedSeats, setSelectedSeats] = useState<Record<string, number>>({});
+
+  // Fetch rides on mount
+  useEffect(() => {
+    fetchRides();
+  }, []);
+
+  const fetchRides = async (destination?: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getRides(destination ? { destination } : undefined);
+      if (res.ok) {
+        const apiRides = (res.data.rides as Array<{
+          id: string;
+          source: string;
+          destination: string;
+          departureTime: string;
+          pricePerSeat: number;
+          seatsAvailable: number;
+          driver: { id: string; name: string; avatar: string | null };
+        }>).map(r => ({
+          id: r.id,
+          rider: r.driver.name,
+          avatar: r.driver.avatar || r.driver.name.charAt(0),
+          source: r.source,
+          destination: r.destination,
+          time: r.departureTime,
+          price: r.pricePerSeat,
+          seats: r.seatsAvailable,
+          rating: 4.8,
+          reviews: Math.floor(Math.random() * 30) + 5,
+        }));
+        setRides(apiRides);
+      } else {
+        setError('Failed to load rides');
+      }
+    } catch {
+      setError('Cannot connect to server. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search:', searchData);
+    fetchRides(searchData.destination);
   };
 
-  const handleBookRide = (rideId: string) => {
-    const ride = MOCK_RIDES.find(r => r.id === rideId);
+  const handleBookRide = async (rideId: string) => {
+    if (!getToken()) {
+      setError('Please login first to book a ride.');
+      return;
+    }
+
+    const ride = rides.find(r => r.id === rideId);
     const seats = selectedSeats[rideId] || 1;
-    if (ride) {
-      onBookRide(ride, seats);
+    if (!ride) return;
+
+    try {
+      const res = await createBooking(rideId, seats);
+      if (res.ok) {
+        onBookRide(ride, seats);
+      } else {
+        setError((res.data.error as string) || 'Failed to book ride');
+      }
+    } catch {
+      setError('Cannot connect to server. Make sure the backend is running.');
     }
   };
 
@@ -150,15 +159,26 @@ export default function FindRidePage({ onBack, onBookRide }: FindRidePageProps) 
 
       {/* Results */}
       <div className="p-4 max-w-2xl mx-auto">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-foreground">
-            Available Rides <span className="text-muted-foreground">({MOCK_RIDES.length})</span>
+            Available Rides <span className="text-muted-foreground">({rides.length})</span>
           </h2>
           <p className="text-sm text-muted-foreground">Departing today</p>
         </div>
 
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading rides...</div>
+        ) : rides.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No rides available yet.</div>
+        ) : (
         <div className="space-y-3">
-          {MOCK_RIDES.map(ride => (
+          {rides.map(ride => (
             <div key={ride.id} className="space-y-3">
               <RideCard
                 {...ride}
@@ -188,6 +208,7 @@ export default function FindRidePage({ onBack, onBookRide }: FindRidePageProps) 
             </div>
           ))}
         </div>
+        )}
 
         {/* Back Button */}
         <Button
