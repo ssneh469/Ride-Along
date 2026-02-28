@@ -79,6 +79,31 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/rides/my/offered — Get rides offered by current user (protected)
+// NOTE: Must be registered BEFORE /:id so Express doesn't treat "my" as an id
+router.get("/my/offered", authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const rides = await prisma.ride.findMany({
+      where: { driverId: req.userId },
+      include: {
+        bookings: {
+          include: {
+            user: {
+              select: { id: true, name: true, avatar: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json({ rides });
+  } catch (error) {
+    console.error("Get my rides error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // GET /api/rides/:id — Get a single ride (public)
 router.get("/:id", async (req: AuthRequest, res: Response) => {
   try {
@@ -106,30 +131,6 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
     res.json({ ride });
   } catch (error) {
     console.error("Get ride error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// GET /api/rides/my/offered — Get rides offered by current user (protected)
-router.get("/my/offered", authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const rides = await prisma.ride.findMany({
-      where: { driverId: req.userId },
-      include: {
-        bookings: {
-          include: {
-            user: {
-              select: { id: true, name: true, avatar: true },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    res.json({ rides });
-  } catch (error) {
-    console.error("Get my rides error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

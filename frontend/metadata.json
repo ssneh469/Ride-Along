@@ -1,0 +1,5 @@
+{
+  "name": "Ride-Along",
+  "description": "A futuristic, premium ride-sharing platform with glassmorphic UI and seamless community-driven travel.",
+  "requestFramePermissions": ["geolocation"]
+}
