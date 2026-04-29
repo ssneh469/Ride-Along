@@ -34,34 +34,40 @@ export const LandingPage = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex flex-col items-center justify-center px-6 text-center">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center py-20">
         <MapBackground />
         
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="z-10 max-w-4xl"
-        >
-          <h1 className="text-5xl md:text-8xl font-display font-bold mb-8 leading-tight tracking-tight">
-            Your Journey.<br />
-            <span className="gradient-text">Reimagined.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/60 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Experience a premium, community-driven ride-sharing platform designed for the modern world. 
-            Fast, secure, and futuristic.
-          </p>
-        </motion.div>
+        {/* 
+          Main Container: Using flex-col and items-center 
+          The 'gap-16' ensures perfect equal spacing between the three components 
+        */}
+        <div className="z-10 max-w-4xl flex flex-col items-center gap-12 md:gap-16">
+          
+          {/* 1. Header & Description */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-6"
+          >
+            <h1 className="text-5xl md:text-8xl font-display font-bold leading-tight tracking-tight">
+              Your Journey.<br />
+              <span className="gradient-text">Reimagined.</span>
+            </h1>
+            <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
+              Experience a premium, community-driven ride-sharing platform designed for the modern world. 
+              Fast, secure, and futuristic.
+            </p>
+          </motion.div>
 
-        {/* Quick Action Bar - New Placement */}
-        <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="absolute bottom-32 left-0 right-0 px-6 z-20"
-        >
-          <div className="max-w-2xl mx-auto">
-            <GlassCard className="p-2 rounded-[2rem] flex flex-col sm:flex-row gap-2" variant="dark">
+          {/* 2. Quick Action Bar - Middle Component */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}  
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="w-full max-w-2xl"
+          >
+            <GlassCard className="p-3 rounded-[2rem] flex flex-col sm:flex-row gap-3 sm:gap-4 backdrop-blur-xl bg-white/5 border border-white/10">
               <Link to="/book" className="flex-1">
                 <GradientButton className="w-full h-16 rounded-[1.8rem] flex items-center justify-center gap-3 text-lg group">
                   Book a Ride 
@@ -70,6 +76,7 @@ export const LandingPage = () => {
                   </div>
                 </GradientButton>
               </Link>
+
               <Link to="/offer" className="flex-1">
                 <SecondaryButton className="w-full h-16 rounded-[1.8rem] flex items-center justify-center gap-3 text-lg hover:bg-white/10">
                   Offer a Ride
@@ -77,25 +84,29 @@ export const LandingPage = () => {
                 </SecondaryButton>
               </Link>
             </GlassCard>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Stats */}
-        <div className="absolute bottom-8 left-0 right-0 px-6">
-          <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
+          {/* 3. Stats - Now inside the flex flow (NOT absolute) */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-16 w-full"
+          >
             <div className="text-center">
-              <div className="text-3xl font-bold gradient-text">{stats.users.toLocaleString()}+</div>
-              <div className="text-xs text-white/40 uppercase tracking-widest mt-1">Active Users</div>
+              <div className="text-3xl md:text-4xl font-bold gradient-text">{stats.users.toLocaleString()}+</div>
+              <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-2">Active Users</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold gradient-text">{stats.ridesCompleted.toLocaleString()}+</div>
-              <div className="text-xs text-white/40 uppercase tracking-widest mt-1">Rides Completed</div>
+              <div className="text-3xl md:text-4xl font-bold gradient-text">{stats.ridesCompleted.toLocaleString()}+</div>
+              <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-2">Rides Completed</div>
             </div>
             <div className="hidden md:block text-center">
-              <div className="text-3xl font-bold gradient-text">4.9/5</div>
-              <div className="text-xs text-white/40 uppercase tracking-widest mt-1">User Satisfaction</div>
+              <div className="text-3xl md:text-4xl font-bold gradient-text">4.9/5</div>
+              <div className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-2">User Satisfaction</div>
             </div>
-          </div>
+          </motion.div>
+          
         </div>
       </section>
 
