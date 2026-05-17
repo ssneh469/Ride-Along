@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { MapPin, Navigation, Users, Car, Search, Check, AlertCircle, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GlassCard, GradientButton, SecondaryButton } from "../components/UI";
+import Map from "../components/Map";
 import { Ride } from "../types";
 import { api } from "../lib/api";
 
@@ -17,6 +18,9 @@ export const BookRide = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
+  const [dropoffCoords, setDropoffCoords] = useState<[number, number] | null>(null);
+  const [selecting, setSelecting] = useState<"pickup" | "dropoff" | "none">("none");
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +129,46 @@ export const BookRide = () => {
                     )}
                   </GradientButton>
                 </form>
+
+                <div className="mt-6 space-y-3">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelecting('pickup')}
+                      className={`px-3 py-2 rounded-xl ${selecting === 'pickup' ? 'gradient-bg text-white' : 'bg-white/5 text-white/70'} `}
+                    >
+                      Select Pickup on Map
+                    </button>
+                    <button
+                      onClick={() => setSelecting('dropoff')}
+                      className={`px-3 py-2 rounded-xl ${selecting === 'dropoff' ? 'gradient-bg text-white' : 'bg-white/5 text-white/70'} `}
+                    >
+                      Select Dropoff on Map
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setSelecting('none'); }}
+                      className="ml-auto px-3 py-2 rounded-xl bg-white/5 text-white/40 hover:bg-white/10 active:scale-95 transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
+
+                  <Map
+                    center={pickupCoords ?? dropoffCoords ?? [23.0225, 72.5714]}
+                    zoom={12}
+                    markers={[...(pickupCoords ? [pickupCoords] : []), ...(dropoffCoords ? [dropoffCoords] : [])]}
+                    onSelect={(latlng) => {
+                      if (selecting === 'pickup') setPickupCoords(latlng);
+                      else if (selecting === 'dropoff') setDropoffCoords(latlng);
+                      setSelecting('none');
+                    }}
+                    height={360}
+                  />
+
+                  <div className="flex gap-4 text-sm text-white/60 mt-2">
+                    <div>Pickup: {pickupCoords ? `${pickupCoords[0].toFixed(4)}, ${pickupCoords[1].toFixed(4)}` : 'not set'}</div>
+                    <div>Dropoff: {dropoffCoords ? `${dropoffCoords[0].toFixed(4)}, ${dropoffCoords[1].toFixed(4)}` : 'not set'}</div>
+                  </div>
+                </div>
               </GlassCard>
             </motion.div>
           )}

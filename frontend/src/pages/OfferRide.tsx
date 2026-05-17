@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { MapPin, Navigation, Calendar, Clock, Users, DollarSign, Check, ChevronRight, ChevronLeft, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GlassCard, GradientButton, SecondaryButton, cn } from "../components/UI";
+import Map from "../components/Map";
 import { api } from "../lib/api";
 
 export const OfferRide = () => {
@@ -18,6 +19,9 @@ export const OfferRide = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [sourceCoords, setSourceCoords] = useState<[number, number] | null>(null);
+  const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
+  const [selecting, setSelecting] = useState<"source" | "dest" | "none">("none");
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
@@ -136,6 +140,41 @@ export const OfferRide = () => {
                       onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
+                  </div>
+                </div>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelecting('source')}
+                      className={`px-3 py-2 rounded-xl ${selecting === 'source' ? 'gradient-bg text-white' : 'bg-white/5 text-white/70'} `}
+                    >
+                      Pick Start on Map
+                    </button>
+                    <button
+                      onClick={() => setSelecting('dest')}
+                      className={`px-3 py-2 rounded-xl ${selecting === 'dest' ? 'gradient-bg text-white' : 'bg-white/5 text-white/70'} `}
+                    >
+                      Pick Destination on Map
+                    </button>
+                    <button onClick={(e) => { e.preventDefault(); setSelecting('none'); }} className="ml-auto px-3 py-2 rounded-xl bg-white/5 text-white/40 hover:bg-white/10 active:scale-95 transition-all">Done</button>
+                  </div>
+
+                  <Map
+                    center={sourceCoords ?? destCoords ?? [23.0225, 72.5714]}
+                    zoom={12}
+                    markers={[...(sourceCoords ? [sourceCoords] : []), ...(destCoords ? [destCoords] : [])]}
+                    onSelect={(latlng) => {
+                      if (selecting === 'source') setSourceCoords(latlng);
+                      else if (selecting === 'dest') setDestCoords(latlng);
+                      setSelecting('none');
+                    }}
+                    height={360}
+                  />
+
+                  <div className="flex gap-4 text-sm text-white/60 mt-2">
+                    <div>Start: {sourceCoords ? `${sourceCoords[0].toFixed(4)}, ${sourceCoords[1].toFixed(4)}` : 'not set'}</div>
+                    <div>Dest: {destCoords ? `${destCoords[0].toFixed(4)}, ${destCoords[1].toFixed(4)}` : 'not set'}</div>
                   </div>
                 </div>
                 <GradientButton
